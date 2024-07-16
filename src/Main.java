@@ -124,7 +124,7 @@ public class Main {
         }
     }
 
-//    1 запрос
+    //    1 запрос
     public static void getAllConcerts(Connection connection) throws SQLException {
         String query = "SELECT * FROM concert";
 
