@@ -23,24 +23,26 @@ public class Main {
             getAllConcerts(connection);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 2. Вывод всех исполнителей");
+            System.out.println("Запрос 2. Добавление нового концерта");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllPerformers(connection);
+            addConcert(connection, "The best concert in France", new Date(System.currentTimeMillis()), "France", 4, 1);
+            getAllConcerts(connection);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 3. Вывод всех организаторов");
+            System.out.println("Запрос 3. Обновление значения");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllOrganizers(connection);
+            updateConcertName(connection, 1, "OMG ");
+            getAllConcerts(connection);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 4. Вывод всех билетов на концерт c id = 1");
+            System.out.println("Запрос 4. Вывод всех билетов на концерт c id = 2");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllTicketsForConcert(connection, 1);
+            getAllTicketsForConcert(connection, 2);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 5. Вывод всех концертов, организованных id = 1 ");
+            System.out.println("Запрос 5. Вывод всех концертов c 13 по 17 июля ");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllConcertsByOrganizer(connection, 1);
+            getAllConcertsInPeriod(connection, java.sql.Date.valueOf("2024-07-13"), java.sql.Date.valueOf("2024-07-17"));
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
             System.out.println("Запрос 6. Вывод всех концертов исполнителя Lana");
@@ -53,34 +55,25 @@ public class Main {
             getAllConcertsByVenue(connection, "CSKA");
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 8. Вывод всех билетов, купленных в 17 июля");
+            System.out.println("Запрос 8. Подсчёт количества концертов, проведённых в каждом месте");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllTicketsByDate(connection, Date.valueOf("2024-07-17"));
+            countConcertsByLocation(connection);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 9. Вывод всех исполнителей из USA");
+            System.out.println("Запрос 9. Удаление записи по id");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllPerformersByCountry(connection, "USA");
+            deleteConcertWithTickets(connection, 1);
+            getAllConcerts(connection);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 10. Вывод всех билетов, цена которых равна 1000");
+            System.out.println("Запрос 10. Поиск всех концертов с билетами дороже 100");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllTicketsAbovePrice(connection, 1000);
+            getAllTicketsAbovePrice(connection, 100);
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
             System.out.println("Запрос 11. Вывод всех концертов, которые проходят после 1 июня");
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
             getAllConcertsAfterDate(connection, Date.valueOf("2024-06-01"));
-
-            System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 12. Вывод всех концертов, у которых цена билета ниже 3000р");
-            System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllConcertsBelowTicketPrice(connection, 3000);
-
-            System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println("Запрос 13. Вывод всех организаторов с номером +7 925 000 00 00");
-            System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
-            getAllOrganizersByContactNumber(connection, "+7 925 000 00 00");
 
             System.out.println("-----------------------------------------------------------------------------------------------------------------------------------");
             System.out.println("Запрос 14. Вывод всех концертов и их исполнителей");
@@ -130,46 +123,42 @@ public class Main {
         }
     }
 
-    //    2 запрос. Вывод всех исполнителей
+    //    2 запрос. Добавление концерта
 
-    public static void getAllPerformers(Connection connection) throws SQLException {
-        String query = "SELECT * FROM performer";
+    public static void addConcert(Connection connection, String name, Date date, String venue, int performerId, int organizerId) throws SQLException {
+        String query = "INSERT INTO concert (name, date, venue, performer_id, organizer_id) VALUES (?, ?, ?, ?, ?)";
 
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, name);
+            statement.setDate(2, new java.sql.Date(date.getTime()));
+            statement.setString(3, venue);
+            statement.setInt(4, performerId);
+            statement.setInt(5, organizerId);
 
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String genre = resultSet.getString("genre");
-                String country = resultSet.getString("country");
-
-                System.out.printf("ID: %d, Name: %s, Genre: %s, Country: %s: \n",
-                        id, name, genre, country);
-            }
+            statement.executeUpdate();
+            System.out.println("Concert added successfully");
+        } catch (Error e){
+            System.out.println(e.getMessage());
         }
     }
 
-    //    3 запрос. Вывод всех организаторов
+    //    3 запрос. Обновление значения
 
 
-    public static void getAllOrganizers(Connection connection) throws SQLException {
-        String query = "SELECT * FROM organizer";
+    public static void updateConcertName(Connection connection, int concertId, String newName) throws SQLException {
+        String query = "UPDATE concert SET name = ? WHERE id = ?";
 
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, newName);
+            statement.setInt(2, concertId);
 
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String contactPhone = resultSet.getString("contact_phone");
-                String email = resultSet.getString("email");
-
-                System.out.printf("ID: %d, Name: %s, Contact Phone: %s, Email: %s: \n",
-                        id, name, contactPhone, email);
-            }
+            statement.executeUpdate();
+            System.out.println("Concert updated successfully");
         }
     }
+
+
+
 
     //    4 запрос. Вывод всех билетов на конкретный концерт
 
@@ -194,14 +183,13 @@ public class Main {
         }
     }
 
-    //    5 запрос
-
-
-    public static void getAllConcertsByOrganizer(Connection connection, int organizerId) throws SQLException {
-        String query = "SELECT * FROM concert WHERE organizer_id = ?";
+    //    5 запрос. Вывод всех концертов c 13 по 17 июля
+    public static void getAllConcertsInPeriod(Connection connection, Date startDate, Date endDate) throws SQLException {
+        String query = "SELECT * FROM concert WHERE date BETWEEN ? AND ?";
 
         try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, organizerId);
+            statement.setDate(1, new java.sql.Date(startDate.getTime()));
+            statement.setDate(2, new java.sql.Date(endDate.getTime()));
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
@@ -210,10 +198,10 @@ public class Main {
                     Date date = resultSet.getDate("date");
                     String venue = resultSet.getString("venue");
                     int performerId = resultSet.getInt("performer_id");
-                    int organizerIdFromDb = resultSet.getInt("organizer_id");
+                    int organizerId = resultSet.getInt("organizer_id");
 
                     System.out.printf("ID: %d, Name: %s, Date: %s, Venue: %s, Performer ID: %d, Organizer ID: %d\n",
-                            id, name, date.toString(), venue, performerId, organizerIdFromDb);
+                            id, name, date.toString(), venue, performerId, organizerId);
                 }
             }
         }
@@ -272,55 +260,55 @@ public class Main {
     //    8 запрос
 
 
-    public static void getAllTicketsByDate(Connection connection, Date purchaseDate) throws SQLException {
-        String query = "SELECT * FROM ticket WHERE purchase_date = ?";
+    public static void countConcertsByLocation(Connection connection) throws SQLException {
+        String query = "SELECT venue, COUNT(*) AS concert_count FROM concert GROUP BY venue";
 
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setDate(1, purchaseDate);
+        try (PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String ticketNumber = resultSet.getString("ticket_number");
-                    int concertId = resultSet.getInt("concert_id");
-                    Date purchaseDateFromDb = resultSet.getDate("purchase_date");
-                    double price = resultSet.getDouble("price");
-
-                    System.out.printf("ID: %d, Ticket Number: %s, Concert ID: %d, Purchase Date: %s, Price: %.2f\n",
-                            id, ticketNumber, concertId, purchaseDateFromDb.toString(), price);
-                }
-            } catch (Exception e){
-                System.out.println(e.getMessage());
+            while (resultSet.next()) {
+                String venue = resultSet.getString("venue");
+                int concertCount = resultSet.getInt("concert_count");
+                System.out.println("Venue: " + venue + ", Count: " + concertCount);
             }
         }
     }
 
-    //    9 запрос
+    //    9 запрос. Удаление записи по id
+    public static void deleteConcertWithTickets(Connection connection, int concertId) throws SQLException {
+        String deleteTicketsQuery = "DELETE FROM ticket WHERE concert_id = ?";
+        String deleteConcertQuery = "DELETE FROM concert WHERE id = ?";
 
-    public static void getAllPerformersByCountry(Connection connection, String country) throws SQLException {
-        String query = "SELECT * FROM performer WHERE country = ?";
+        try (PreparedStatement deleteTicketsStmt = connection.prepareStatement(deleteTicketsQuery);
+             PreparedStatement deleteConcertStmt = connection.prepareStatement(deleteConcertQuery)) {
 
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, country);
+            deleteTicketsStmt.setInt(1, concertId);
+            deleteTicketsStmt.executeUpdate();
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String name = resultSet.getString("name");
-                    String genre = resultSet.getString("genre");
-                    String countryFromDb = resultSet.getString("country");
+            deleteConcertStmt.setInt(1, concertId);
+            int rowsAffected = deleteConcertStmt.executeUpdate();
 
-                    System.out.printf("ID: %d, Name: %s, Genre: %s, Country: %s: \n",
-                            id, name, genre, countryFromDb);
-                }
+            if (rowsAffected > 0) {
+                System.out.println("All delete");
+            } else {
+                System.out.println("No concert with this ID");
             }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
     }
 
-    //    10 запрос
+
+
+    //    10 запрос. Поиск всех концертов с билетами дороже 1000
 
     public static void getAllTicketsAbovePrice(Connection connection, double price) throws SQLException {
-        String query = "SELECT * FROM ticket WHERE price > ?";
+        String query = "SELECT ticket.ticket_number, ticket.concert_id, ticket.purchase_date, ticket.price, " +
+                "concert.id, concert.name, concert.date, concert.venue, concert.performer_id, concert.organizer_id " +
+                "FROM concert " +
+                "JOIN ticket ON concert.id = ticket.concert_id " +
+                "WHERE ticket.price > ?";
+
 
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setDouble(1, price);
@@ -366,57 +354,8 @@ public class Main {
         }
     }
 
-    //    12 запрос
 
-    public static void getAllConcertsBelowTicketPrice(Connection connection, double price) throws SQLException {
-        String query = "SELECT * FROM concert INNER JOIN ticket ON concert.id = ticket.concert_id WHERE ticket.price < ?";
-
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setDouble(1, price);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String name = resultSet.getString("name");
-                    Date date = resultSet.getDate("date");
-                    String venue = resultSet.getString("venue");
-                    int performerId = resultSet.getInt("performer_id");
-                    int organizerId = resultSet.getInt("organizer_id");
-
-                    System.out.printf("ID: %d, Name: %s, Date: %s, Venue: %s, Performer ID: %d, Organizer ID: %d\n",
-                            id, name, date.toString(), venue, performerId, organizerId);
-                }
-            }
-        } catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-    //    13 запрос
-
-    public static void getAllOrganizersByContactNumber(Connection connection, String contactNumber) throws SQLException {
-        String query = "SELECT * FROM organizer WHERE contact_phone = ?";
-
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, contactNumber);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String name = resultSet.getString("name");
-                    String contactPhone = resultSet.getString("contact_phone");
-                    String email = resultSet.getString("email");
-
-                    System.out.printf("ID: %d, Name: %s, Contact Phone: %s, Email: %s: \n",
-                            id, name, contactPhone, email);
-                }
-            } catch (Exception e){
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
-    //    14 запрос. Вывод всех концертов и их исполнителей
+    //    12 запрос. Вывод всех концертов и их исполнителей
 
     public static void getConcertsAndPerformers(Connection connection) throws SQLException {
         String query = "SELECT c.name AS concert_name, c.date, p.name AS performer_name, p.genre " +
